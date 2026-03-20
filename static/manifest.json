@@ -1,0 +1,47 @@
+{
+  "name": "Aménagement Monzon",
+  "short_name": "Monzon",
+  "description": "Premium construction, renovation, landscaping and maintenance services.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0c0e",
+  "theme_color": "#d49e30",
+  "orientation": "any",
+  "lang": "fr-CA",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "https://c.animaapp.com/mmslviois4xSNv/img/generated-image-1773609520333.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://c.animaapp.com/mmslviois4xSNv/img/generated-image-1773609520333.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "categories": ["business", "lifestyle", "productivity"],
+  "scope": "/",
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "shortcuts": [
+    {
+      "name": "Client Portal",
+      "short_name": "Portal",
+      "description": "Access your client dashboard",
+      "url": "/portal",
+      "icons": [{ "src": "https://c.animaapp.com/mmslviois4xSNv/img/generated-image-1773609520333.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "AI Chat",
+      "short_name": "AI Chat",
+      "description": "Chat with our AI assistant",
+      "url": "/ai-chat",
+      "icons": [{ "src": "https://c.animaapp.com/mmslviois4xSNv/img/generated-image-1773609520333.png", "sizes": "192x192" }]
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+module.exports = {
+  darkMode: ["class"],
+  content: ["./src/**/*.{ts,tsx,js,jsx}"],
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          DEFAULT: "hsl(210, 15%, 12%)",
+          foreground: "hsl(0, 0%, 98%)",
+        },
+        secondary: {
+          DEFAULT: "hsl(210, 10%, 25%)",
+          foreground: "hsl(0, 0%, 100%)",
+        },
+        tertiary: {
+          DEFAULT: "hsl(42, 90%, 52%)",
+          foreground: "hsl(210, 15%, 12%)",
+        },
+        neutral: {
+          DEFAULT: "hsl(0, 0%, 100%)",
+          foreground: "hsl(210, 15%, 12%)",
+        },
+        background: "hsl(0, 0%, 100%)",
+        foreground: "hsl(210, 15%, 12%)",
+        border: "hsl(210, 10%, 85%)",
+        input: "hsl(210, 10%, 85%)",
+        ring: "hsl(42, 90%, 52%)",
+        card: {
+          DEFAULT: "hsl(0, 0%, 100%)",
+          foreground: "hsl(210, 15%, 12%)",
+        },
+        muted: {
+          DEFAULT: "hsl(210, 15%, 94%)",
+          foreground: "hsl(210, 8%, 45%)",
+        },
+        accent: {
+          DEFAULT: "hsl(42, 90%, 52%)",
+          foreground: "hsl(210, 15%, 12%)",
+        },
+        destructive: {
+          DEFAULT: "hsl(0, 84%, 60%)",
+          foreground: "hsl(0, 0%, 98%)",
+        },
+        success: "hsl(145, 65%, 46%)",
+        warning: "hsl(32, 100%, 45%)",
+        gray: {
+          50: "hsl(210, 20%, 98%)",
+          100: "hsl(210, 15%, 94%)",
+          200: "hsl(210, 10%, 85%)",
+          300: "hsl(210, 9%, 70%)",
+          400: "hsl(210, 8%, 55%)",
+          500: "hsl(210, 8%, 45%)",
+          600: "hsl(210, 10%, 35%)",
+          700: "hsl(210, 12%, 25%)",
+          800: "hsl(210, 14%, 18%)",
+          900: "hsl(210, 16%, 12%)",
+        },
+        charcoal: "hsl(210, 15%, 12%)",
+        "warm-white": "hsl(0, 0%, 98%)",
+        gold: "hsl(42, 90%, 52%)",
+        "gold-dark": "hsl(32, 100%, 45%)",
+        "surface-0": "hsl(220, 18%, 6%)",
+        "surface-1": "hsl(220, 16%, 9%)",
+        "surface-2": "hsl(220, 14%, 13%)",
+        "surface-3": "hsl(220, 12%, 18%)",
+      },
+      fontFamily: {
+        sans: ['"Outfit"', "sans-serif"],
+        headline: ['"Cormorant Garamond"', "Georgia", "serif"],
+        display: ['"Cormorant Garamond"', "Georgia", "serif"],
+        mono: ['"JetBrains Mono"', "monospace"],
+        body: ['"Outfit"', "sans-serif"],
+      },
+      borderRadius: {
+        "4xl": "2rem",
+        "3xl": "1.5rem",
+        "2xl": "1rem",
+        xl: "0.75rem",
+        lg: "0.5rem",
+        md: "0.375rem",
+        sm: "0.25rem",
+      },
+      backgroundImage: {
+        "gradient-1": "linear-gradient(160deg, hsl(220, 20%, 7%) 0%, hsl(220, 18%, 4%) 100%)",
+        "gradient-2": "linear-gradient(120deg, hsl(42, 85%, 55%) 0%, hsl(36, 90%, 48%) 100%)",
+        "gradient-hero": "linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.92) 100%)",
+        "gradient-dark": "linear-gradient(160deg, hsl(220, 20%, 7%) 0%, hsl(220, 18%, 4%) 100%)",
+        "gradient-radial": "radial-gradient(ellipse at center, var(--tw-gradient-stops))",
+        "gradient-noise": "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E\")",
+        "gradient-pearl": "linear-gradient(160deg, hsl(0,0%,98%) 0%, hsl(210,15%,93%) 100%)",
+        "gradient-charcoal": "linear-gradient(160deg, hsl(210,15%,14%) 0%, hsl(220,18%,9%) 100%)",
+      },
+      spacing: {
+        "18": "4.5rem",
+        "22": "5.5rem",
+        "26": "6.5rem",
+        "30": "7.5rem",
+        "34": "8.5rem",
+        "38": "9.5rem",
+        "section": "9rem",
+        "section-sm": "6rem",
+      },
+      keyframes: {
+        "fade-up": {
+          "0%": { opacity: "0", transform: "translateY(40px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "fade-down": {
+          "0%": { opacity: "0", transform: "translateY(-20px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "fade-in": {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
+        "slide-in-left": {
+          "0%": { opacity: "0", transform: "translateX(-40px)" },
+          "100%": { opacity: "1", transform: "translateX(0)" },
+        },
+        "slide-in-right": {
+          "0%": { opacity: "0", transform: "translateX(40px)" },
+          "100%": { opacity: "1", transform: "translateX(0)" },
+        },
+        "scale-in": {
+          "0%": { opacity: "0", transform: "scale(0.92)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
+        "spin-slow": {
+          "0%": { transform: "rotateY(0deg)" },
+          "100%": { transform: "rotateY(360deg)" },
+        },
+        "float": {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-12px)" },
+        },
+        "pulse-ring": {
+          "0%": { transform: "scale(0.95)", opacity: "0.7" },
+          "50%": { transform: "scale(1.05)", opacity: "0.3" },
+          "100%": { transform: "scale(0.95)", opacity: "0.7" },
+        },
+        "scan-line": {
+          "0%": { transform: "translateY(-100%)" },
+          "100%": { transform: "translateY(100vh)" },
+        },
+        "draw-line": {
+          "0%": { strokeDashoffset: "1000" },
+          "100%": { strokeDashoffset: "0" },
+        },
+        "shimmer": {
+          "0%": { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
+        },
+        "number-count": {
+          "0%": { opacity: "0", transform: "translateY(10px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "marquee": {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
+        "reveal-up": {
+          "0%": { opacity: "0", transform: "translateY(60px) skewY(1deg)" },
+          "100%": { opacity: "1", transform: "translateY(0) skewY(0)" },
+        },
+        "reveal-clip": {
+          "0%": { clipPath: "inset(0 100% 0 0)" },
+          "100%": { clipPath: "inset(0 0% 0 0)" },
+        },
+        "line-grow": {
+          "0%": { transform: "scaleX(0)", transformOrigin: "left" },
+          "100%": { transform: "scaleX(1)", transformOrigin: "left" },
+        },
+        "glow-pulse": {
+          "0%, 100%": { opacity: "0.4", transform: "scale(1)" },
+          "50%": { opacity: "0.8", transform: "scale(1.05)" },
+        },
+        "letter-reveal": {
+          "0%": { opacity: "0", transform: "translateY(20px) rotateX(45deg)" },
+          "100%": { opacity: "1", transform: "translateY(0) rotateX(0)" },
+        },
+        "depth-in": {
+          "0%": { opacity: "0", transform: "translateZ(-80px) scale(0.94)" },
+          "100%": { opacity: "1", transform: "translateZ(0) scale(1)" },
+        },
+      },
+      animation: {
+        "fade-up": "fade-up 1s cubic-bezier(0.16,1,0.3,1) forwards",
+        "fade-down": "fade-down 0.7s cubic-bezier(0.16,1,0.3,1) forwards",
+        "fade-in": "fade-in 1.2s ease-out forwards",
+        "slide-in-left": "slide-in-left 1s cubic-bezier(0.16,1,0.3,1) forwards",
+        "slide-in-right": "slide-in-right 1s cubic-bezier(0.16,1,0.3,1) forwards",
+        "scale-in": "scale-in 0.7s cubic-bezier(0.16,1,0.3,1) forwards",
+        "spin-slow": "spin-slow 16s linear infinite",
+        "float": "float 8s ease-in-out infinite",
+        "pulse-ring": "pulse-ring 4s ease-in-out infinite",
+        "scan-line": "scan-line 5s linear infinite",
+        "shimmer": "shimmer 3s linear infinite",
+        "marquee": "marquee 40s linear infinite",
+        "reveal-up": "reveal-up 1.1s cubic-bezier(0.16,1,0.3,1) forwards",
+        "line-grow": "line-grow 1.4s cubic-bezier(0.16,1,0.3,1) forwards",
+        "glow-pulse": "glow-pulse 4s ease-in-out infinite",
+        "depth-in": "depth-in 1s cubic-bezier(0.16,1,0.3,1) forwards",
+      },
+      backdropBlur: {
+        xs: "2px",
+      },
+    },
+  },
+  plugins: [require("tailwindcss-animate")],
+};
