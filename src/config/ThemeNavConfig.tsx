@@ -3,7 +3,8 @@ import { ReactNode } from "react";
 export interface ThemeNavLink {
   label: string;
   href: string;
-  icon: ReactNode;
+  icon?: ReactNode;
+  badge?: ReactNode;
 }
 
 export const DEFAULT_NAV_LINKS: ThemeNavLink[] = [

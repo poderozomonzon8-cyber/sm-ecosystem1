@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
-import PageShell from "@/components/PageShell";
-import PageHero from "@/components/PageHero";
 import {
   Check,
   ShoppingCart,
@@ -17,6 +15,9 @@ import {
 } from "@phosphor-icons/react";
 import { supabase } from "@/lib/supabase";
 import { useAppAuth } from "@/contexts/AuthContext";
+import PageShell from "@/components/PageShell";
+import PageHero from "@/components/PageHero";
+import StorePage from "@/pages/StorePage";
 
 /* ───────────────────────────────────────────────
    FALLBACK SERVICES
@@ -60,14 +61,18 @@ const CATS = [
    MAIN COMPONENT
 ─────────────────────────────────────────────── */
 export default function MaintenancePage() {
-  const [cat, setCat] = useState("all");
-  const [added, setAdded] = useState(new Set<string>());
-  const [view, setView] = useState<"services" | "subscriptions">("services");
-  const { user } = useAppAuth();
+  return (
+    <PageShell>
+      <PageHero
+        eyebrow="Maintenance Store"
+        title="Tools & Equipment"
+        subtitle="Professional-grade tools and accessories for maintenance and service work."
+      />
 
-  const [services, setServices] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
+      <StorePage />
+    </PageShell>
+  );
+}
   // Load services from Supabase
   useEffect(() => {
     const load = async () => {

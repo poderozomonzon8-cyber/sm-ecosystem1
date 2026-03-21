@@ -80,59 +80,101 @@ function MobilePanel({
         }}
         onClick={onClose}
       />
-      {/* Bottom slide-up panel */}
+
+      {/* NEW: Centered top-drop modal */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-[9991] md:hidden p-4 pb-4 pt-0"
+        className="fixed left-1/2 top-0 z-[9991] md:hidden w-[92%] max-w-md"
         style={{
-          transform: open ? "translateY(0)" : "translateY(100%)",
-          transition: "transform 0.4s cubic-bezier(0.16,1,0.3,1)",
-          opacity: open ? 1 : 0,
+          transform: open
+            ? "translate(-50%, 20vh)" // centered drop
+            : "translate(-50%, -100%)", // hidden above screen
+          transition: "transform 0.45s cubic-bezier(0.16,1,0.3,1)",
         }}
       >
-        <div className="glass-dark rounded-2xl w-full max-w-md max-h-[70vh] pt-6 pb-10 px-6 flex flex-col h-fit shadow-2xl">
-          {/* Handle bar arriba */}
-          <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-6 self-start" />
-
-          <div className="mb-5 flex-1">
-            <p className="font-mono text-[10px] tracking-[0.28em] text-gold/60 uppercase mb-1">
-              Bienvenue · Welcome
-            </p>
-            <h3 className="font-headline text-warm-white text-[1.4rem] font-light">
-              Which are your needs?
-            </h3>
+        <div
+          className="glass-dark rounded-2xl shadow-2xl overflow-hidden"
+          style={{
+            height: "75vh", // 3/4 screen
+            display: "flex",
+            flexDirection: "column",
+            background: "rgba(10,12,18,0.85)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            backdropFilter: "blur(28px)",
+          }}
+        >
+          {/* Close button */}
+          <div className="flex justify-end p-3">
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gold/80 hover:bg-white/10 transition-all"
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path d="M4 4L14 14M14 4L4 14" stroke="currentColor" strokeWidth="1.4" />
+              </svg>
+            </button>
           </div>
 
-          <div className="flex flex-col gap-3">
+          {/* Header */}
+          <div className="px-5 pb-3">
+            <p className="font-mono text-[9.5px] tracking-[0.28em] text-gold/55 uppercase mb-1">
+              Bienvenue · Welcome
+            </p>
+            <p className="font-headline text-warm-white/90 text-[1.15rem] font-light">
+              Which are your needs?
+            </p>
+          </div>
+
+          {/* Options */}
+          <div className="p-3 flex flex-col gap-1.5 overflow-y-auto">
             {SERVICES.map((svc, i) => (
               <button
                 key={svc.id}
                 onClick={() => onSelect(svc.id)}
-                className="group w-full text-left flex items-center gap-4 px-4 py-4 rounded-xl border border-white/[0.07] bg-white/[0.03] active:bg-white/[0.08] transition-all duration-300"
-                style={{ transitionDelay: open ? `${i * 60}ms` : "0ms" }}
+                className="group w-full text-left flex items-center gap-3.5 px-3.5 py-3 rounded-lg hover:bg-white/[0.055] transition-all duration-250 focus:outline-none"
+                style={{ transitionDelay: open ? `${i * 40}ms` : "0ms" }}
               >
-                <span className="shrink-0 w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 group-active:border-gold/40">
+                <span
+                  className="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-colors duration-300"
+                  style={{
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    color: "rgba(200,200,200,0.65)",
+                  }}
+                >
                   {svc.icon}
                 </span>
-                <div className="flex flex-col">
-                  <span className="font-headline text-warm-white text-[1.1rem] font-medium leading-tight">
+
+                <div className="flex flex-col flex-1 min-w-0">
+                  <span className="font-headline text-warm-white/90 text-[1rem] font-medium leading-tight group-hover:text-warm-white transition-colors">
                     {svc.label}
                   </span>
-                  <span className="font-mono text-[0.6rem] tracking-[0.18em] uppercase text-gray-500 mt-0.5">
+                  <span className="font-mono text-[0.58rem] tracking-[0.16em] uppercase text-gray-500 mt-0.5 group-hover:text-gray-400 transition-colors">
                     {svc.sublabel}
                   </span>
                 </div>
-                <svg className="ml-auto shrink-0 text-gray-600 group-active:text-gold transition-colors" width="18" height="18" viewBox="0 0 18 18" fill="none">
-                  <path d="M4 9H14M9.5 5L14 9L9.5 13" stroke="currentColor" strokeWidth="1.2" strokeLinecap="square"/>
+
+                <svg
+                  className="shrink-0 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all duration-300 text-gold/70"
+                  width="16" height="16" viewBox="0 0 16 16" fill="none"
+                >
+                  <path d="M3 8H13M9 4L13 8L9 12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="square" />
                 </svg>
               </button>
             ))}
+          </div>
+
+          {/* Footer */}
+          <div className="h-px mx-3 bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
+          <div className="px-5 py-3">
+            <p className="font-mono text-[8.5px] tracking-[0.22em] text-gray-600 uppercase">
+              Aménagement Monzon · Montréal
+            </p>
           </div>
         </div>
       </div>
     </>
   );
 }
-
 /* ══════════════════════════════════════════════════════════
    DESKTOP DROPDOWN
    ══════════════════════════════════════════════════════════ */

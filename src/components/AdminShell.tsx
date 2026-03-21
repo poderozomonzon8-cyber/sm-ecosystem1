@@ -14,7 +14,8 @@ import {
   ShieldCheck, UserGear, Plug, BellRinging, DeviceMobile,
   X, CheckCircle, Spinner, Star, Buildings, Play,
 } from "@phosphor-icons/react";
-// import { useQuery, useMutation } from "@/lib/supabase"; // REMOVED
+import { supabase } from "@/lib/supabaseClient";
+import { useEffect, useState } from "react";
 import { useAppAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import BillingPanel from "@/admin/BillingPanel";
@@ -84,17 +85,28 @@ const SIDEBAR_ITEMS = [
 ];
 
 function DashboardPanel({ setActiveTab }: { setActiveTab: (t: string) => void }) {
-  const { data: projects    } = useQuery("Project",   { limit: 5 });
-  const { data: clients     } = useQuery("Client",    { limit: 5 });
-  const { data: employees   } = useQuery("Employee",  { limit: 5 });
-  const { data: mediaAssets } = useQuery("MediaAsset",{ limit: 5 });
+  const [projects, setProjects] = useState<any[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
+  const [employees, setEmployees] = useState<any[]>([]);
+  const [mediaAssets, setMediaAssets] = useState<any[]>([]);
 
-  const stats = [
-    { label: "Active Projects", value: String(projects?.length ?? "—")   },
-    { label: "Clients",         value: String(clients?.length ?? "—")     },
-    { label: "Employees",       value: String(employees?.length ?? "—")   },
-    { label: "Media Files",     value: String(mediaAssets?.length ?? "—") },
-  ];
+  useEffect(() => {
+    async function load() {
+      const [p, c, e, m] = await Promise.all([
+        supabase.from("Project").select("*").order("createdAt", { ascending: false }).limit(5),
+        supabase.from("Client").select("*").order("createdAt", { ascending: false }).limit(5),
+        supabase.from("Employee").select("*").order("createdAt", { ascending: false }).limit(5),
+        supabase.from("MediaAsset").select("*").order("createdAt", { ascending: false }).limit(5),
+      ]);
+
+      if (!p.error && p.data) setProjects(p.data);
+      if (!c.error && c.data) setClients(c.data);
+      if (!e.error && e.data) setEmployees(e.data);
+      if (!m.error && m.data) setMediaAssets(m.data);
+    }
+
+    load();
+  }, []);
 
   return (
     <div>

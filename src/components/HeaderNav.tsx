@@ -9,6 +9,7 @@ import LoginModal from "@/components/auth/LoginModal";
 import { WhichAreYourNeedsButton } from "@/components/ServiceSelector";
 import { DEFAULT_NAV_LINKS, ThemeNavLink } from "@/config/ThemeNavConfig";
 import { useNavOverrides } from "@/hooks/useNavOverride";
+import { useQuery } from "@tanstack/react-query";
 
 /* ── Collapsible desktop nav with a single dropdown ── */
 function DesktopNav({

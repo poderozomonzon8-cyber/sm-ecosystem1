@@ -1,17 +1,45 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import { supabase, getUserProfile } from "../lib/supabase";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 /* ─────────────────────────────────────────────
-   Permission catalogue
-───────────────────────────────────────────── */
+   TYPES
+────────────────────────────────────────────── */
+
 export type Permission =
   | "view" | "edit" | "create" | "delete" | "approve"
   | "manage_billing" | "manage_projects" | "manage_employees" | "manage_clients"
   | "manage_leads" | "manage_analytics" | "manage_3d_assets" | "manage_appearance"
   | "manage_settings" | "manage_roles" | "manage_users";
 
-export type Role = "admin" | "manager" | "employee" | "accountant" | "client" | "guest";
+export type Role =
+  | "admin"
+  | "manager"
+  | "employee"
+  | "accountant"
+  | "client"
+  | "guest";
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  name?: string;
+  profilePictureUrl?: string;
+}
+
+export interface UserProfile {
+  id: string;
+  role: Role;
+  name?: string;
+  profilePictureUrl?: string;
+}
 
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   admin: [
@@ -34,10 +62,11 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
 export const ADMIN_EMAILS = ["silviolmonzon@amenagementmonzon.com"];
 
 /* ─────────────────────────────────────────────
-   Context type
-───────────────────────────────────────────── */
+   CONTEXT TYPE
+────────────────────────────────────────────── */
+
 export type AuthContextType = {
-  user: { id: string; email: string; name?: string; profilePictureUrl?: string } | null;
+  user: AuthUser | null;
   isPending: boolean;
   isAnonymous: boolean;
   role: Role;
@@ -46,23 +75,24 @@ export type AuthContextType = {
   isAdmin: boolean;
   isClient: boolean;
   isStaff: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: () => Promise<void>;
   logout: () => Promise<void>;
 };
 
 const AuthCtx = createContext<AuthContextType | null>(null);
 
 /* ─────────────────────────────────────────────
-   Provider
-───────────────────────────────────────────── */
+   PROVIDER
+────────────────────────────────────────────── */
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<{ id: string; email: string; name?: string } | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [isPending, setIsPending] = useState(true);
   const [isAnonymous] = useState(false);
 
   /* ─────────────────────────────────────────────
-     Supabase auth listener
-  ───────────────────────────────────────────── */
+     AUTH LISTENER
+  ────────────────────────────────────────────── */
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(
@@ -71,50 +101,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               id: session.user.id,
               email: session.user.email!,
               name: session.user.user_metadata?.name,
+              profilePictureUrl: session.user.user_metadata?.avatar_url,
             }
           : null
       );
       setIsPending(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(
-        session?.user
-          ? {
-              id: session.user.id,
-              email: session.user.email!,
-              name: session.user.user_metadata?.name,
-            }
-          : null
-      );
-      setIsPending(false);
-    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(
+          session?.user
+            ? {
+                id: session.user.id,
+                email: session.user.email!,
+                name: session.user.user_metadata?.name,
+                profilePictureUrl: session.user.user_metadata?.avatar_url,
+              }
+            : null
+        );
+        setIsPending(false);
+      }
+    );
 
     return () => subscription.unsubscribe();
   }, []);
 
   /* ─────────────────────────────────────────────
-     LOGIN (Supabase v2)
-  ───────────────────────────────────────────── */
-  const login = useCallback(async (email: string, password: string) => {
+     LOGIN — Google OAuth
+  ────────────────────────────────────────────── */
+  const login = useCallback(async () => {
     try {
       setIsPending(true);
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin + "/admin",
+        },
       });
 
       if (error) throw error;
-
-      if (data.user) {
-        const profile = await getUserProfile(data.user.id);
-        setUser({
-          id: data.user.id,
-          email: data.user.email!,
-          name: profile?.name,
-        });
-      }
     } catch (error) {
       console.error("[Auth] Login error:", error);
       throw error;
@@ -124,14 +151,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   /* ─────────────────────────────────────────────
-     LOGOUT (Supabase v2)
-  ───────────────────────────────────────────── */
+     LOGOUT
+  ────────────────────────────────────────────── */
   const logout = async () => {
     const { error } = await supabase.auth.signOut();
 
-    if (error) {
-      console.error("[Auth] Logout error:", error);
-    }
+    if (error) console.error("[Auth] Logout error:", error);
 
     clearStoredRole();
     setUser(null);
@@ -139,9 +164,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   /* ─────────────────────────────────────────────
      ROLE + PROFILE
-  ───────────────────────────────────────────── */
+  ────────────────────────────────────────────── */
   const [role, setRole] = useState<Role>("client");
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
 
   const updateProfile = async (userId: string) => {
     try {
@@ -162,36 +187,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user?.id]);
 
+  /* Persist role */
+  useEffect(() => {
+    if (role) setStoredRole(role);
+  }, [role]);
+
   const permissions = useMemo(() => ROLE_PERMISSIONS[role] ?? [], [role]);
   const can = useCallback((p: Permission) => permissions.includes(p), [permissions]);
+
   const isAdmin = role === "admin";
   const isClient = role === "client";
   const isStaff = ["admin", "manager", "employee", "accountant"].includes(role);
 
-  return (
-    <AuthCtx.Provider
-      value={{
-        user,
-        isPending,
-        isAnonymous,
-        role,
-        permissions,
-        can,
-        isAdmin,
-        isClient,
-        isStaff,
-        login,
-        logout,
-      }}
-    >
-      {children}
-    </AuthCtx.Provider>
+  /* ─────────────────────────────────────────────
+     MEMOIZED VALUE
+  ────────────────────────────────────────────── */
+  const value = useMemo(
+    () => ({
+      user,
+      isPending,
+      isAnonymous,
+      role,
+      permissions,
+      can,
+      isAdmin,
+      isClient,
+      isStaff,
+      login,
+      logout,
+    }),
+    [
+      user,
+      isPending,
+      isAnonymous,
+      role,
+      permissions,
+      can,
+      isAdmin,
+      isClient,
+      isStaff,
+      login,
+      logout,
+    ]
   );
+
+  return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }
 
 /* ─────────────────────────────────────────────
-   Hook
-───────────────────────────────────────────── */
+   HOOK
+────────────────────────────────────────────── */
+
 export function useAppAuth(): AuthContextType {
   const ctx = useContext(AuthCtx);
   if (!ctx) throw new Error("useAppAuth must be used inside AuthProvider");
@@ -199,8 +245,9 @@ export function useAppAuth(): AuthContextType {
 }
 
 /* ─────────────────────────────────────────────
-   LocalStorage helpers
-───────────────────────────────────────────── */
+   LOCAL STORAGE HELPERS
+────────────────────────────────────────────── */
+
 export function setStoredRole(role: string) {
   localStorage.setItem("user_role", role);
 }

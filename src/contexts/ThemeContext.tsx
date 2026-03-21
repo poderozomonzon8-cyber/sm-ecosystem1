@@ -8,6 +8,7 @@ import { getNavConfig, ThemeNavConfig } from "@/config/ThemeNavConfig";
    ═══════════════════════════════════════════════════════ */
 
 export type ThemeVars = {
+  footerLogo: any;
   /* ── Brand colors ── */
   "--theme-primary":          string;
   "--theme-secondary":        string;
@@ -646,6 +647,7 @@ const PRESET_OVERRIDES_KEY = "monzon-preset-overrides-v2";
 export type ThemeTransitionStyle = "dust-fade" | "blueprint-wipe" | "clean-slide" | "fade";
 
 export type ThemeSettings = {
+  footerLogo: any;
   /** Night mode */
   nightModeEnabled:   boolean;
   nightModeAuto:      boolean;   // follows system preference OR time

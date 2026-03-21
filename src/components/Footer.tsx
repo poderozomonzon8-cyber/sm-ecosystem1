@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { InstagramLogo, YoutubeLogo, FacebookLogo, TiktokLogo, ArrowUpRight } from "@phosphor-icons/react";
 import { useTheme } from "@/contexts/ThemeContext";
-import { useQuery } from "@/lib/supabase";
 
 const LINKS = {
   Company: [
@@ -183,16 +182,19 @@ function FooterParticles({ preset, density }: { preset: string | null; density: 
 }
 
 export default function Footer() {
-  const [email,   setEmail]   = useState("");
+  const [email, setEmail] = useState("");
   const [subDone, setSubDone] = useState(false);
   const { themeSettings, activePresetId, liveTheme, isNightMode } = useTheme();
-  const { data: logoAssets } = useQuery("LogoAsset" as any);
-  const activeFooterLogo = (logoAssets as any[])?.find((l: any) => l.type === "dark" && l.active === "yes")
-    || (logoAssets as any[])?.find((l: any) => l.type === "light" && l.active === "yes");
+
+  // Logo final (según tu ThemeContext)
+  const activeFooterLogo = liveTheme?.footerLogo ?? themeSettings?.footerLogo;
 
   const handleSub = (e: React.FormEvent) => {
     e.preventDefault();
-    if (email.trim()) { setSubDone(true); setEmail(""); }
+    if (email.trim()) {
+      setSubDone(true);
+      setEmail("");
+    }
   };
 
   /* Resolve footer accent colors from settings */
@@ -279,19 +281,32 @@ export default function Footer() {
             </p>
             <div className="flex gap-2.5">
               {SOCIALS.map(({ Icon, label, href }) => (
-                <a key={label} href={href} aria-label={label}
-                  className="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-110 group focus:outline-none focus-visible:ring-2"
-                  style={{
-                    background: "rgba(255,255,255,0.05)",
-                    border: `1px solid rgba(255,255,255,0.07)`,
-                    color: "rgba(255,255,255,0.35)",
-                    focusRingColor: accentColor,
-                  }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = accentColor; (e.currentTarget as HTMLElement).style.color = "white"; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.05)"; (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.35)"; }}
-                >
-                  <Icon size={16} weight="fill" />
-                </a>
+                <a
+  key={label}
+  href={href}
+  aria-label={label}
+  className="
+    w-9 h-9 rounded-xl flex items-center justify-center
+    transition-all duration-200 hover:scale-110 group
+    focus:outline-none focus-visible:ring-2
+  "
+  style={{
+    background: "rgba(255,255,255,0.05)",
+    border: `1px solid rgba(255,255,255,0.07)`,
+    color: "rgba(255,255,255,0.35)",
+    "--tw-ring-color": accentColor,
+  } as React.CSSProperties}
+  onMouseEnter={e => {
+    e.currentTarget.style.background = accentColor;
+    e.currentTarget.style.color = "white";
+  }}
+  onMouseLeave={e => {
+    e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+    e.currentTarget.style.color = "rgba(255,255,255,0.35)";
+  }}
+>
+  <Icon size={16} weight="fill" />
+</a>
               ))}
             </div>
           </div>

@@ -1,33 +1,159 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from "@supabase/supabase-js";
 
-// Env vars
-const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL ?? 'https://wzzfuqetmxtiuxuqwedk.supabase.co'
-const supabaseAnonKey = import.meta.env?.VITE_SUPABASE_ANON_KEY ?? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6emZ1cWV0bXh0aXV4dXF3ZWRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NDU5MzcsImV4cCI6MjA4OTUyMTkzN30.reqw6lKZ3vIz8LS9BLB-dVwHeafJvCf29CMsz9xeNFM'
+/* ─────────────────────────────────────────────
+   SUPABASE CLIENT
+────────────────────────────────────────────── */
 
-// Client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+const supabaseUrl = "YOUR_SUPABASE_URL";
+const supabaseKey = "YOUR_SUPABASE_ANON_KEY";
 
-// Auth: Sign In
-export async function supabaseSignIn(email: string, password: string) {
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-  if (error) throw error
-  return data
+export const supabase = createClient(supabaseUrl, supabaseKey);
+
+/* ─────────────────────────────────────────────
+   LEAFLET FIX (Vite)
+────────────────────────────────────────────── */
+
+declare global {
+  var __LEAFLET_ICON_URL__: string;
 }
 
-// Auth: Sign Out
-export async function supabaseSignOut() {
-  const { error } = await supabase.auth.signOut()
-  if (error) throw error
+/* ─────────────────────────────────────────────
+   TYPES
+────────────────────────────────────────────── */
+
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
+
+export interface Database {
+  public: {
+    Tables: {
+      ContactSubmission: {
+        Row: {
+          name: string;
+          email: string;
+          phone: string | null;
+          project_type: string | null;
+          budget: string | null;
+          message: string;
+          created_at: string;
+        };
+        Insert: {
+          name: string;
+          email: string;
+          phone?: string | null;
+          project_type?: string | null;
+          budget?: string | null;
+          message: string;
+          created_at?: string;
+        };
+        Update: {
+          name?: string;
+          email?: string;
+          phone?: string | null;
+          project_type?: string | null;
+          budget?: string | null;
+          message?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+
+      /* ⭐ ADD: profiles table */
+      profiles: {
+        Row: {
+          id: string;
+          role: string;
+          name: string | null;
+          profilePictureUrl: string | null;
+        };
+        Insert: {
+          id: string;
+          role?: string;
+          name?: string | null;
+          profilePictureUrl?: string | null;
+        };
+        Update: {
+          role?: string;
+          name?: string | null;
+          profilePictureUrl?: string | null;
+        };
+        Relationships: [];
+      };
+    };
+  };
 }
 
-// Profiles query
+/* ─────────────────────────────────────────────
+   GENERIC HELPERS
+────────────────────────────────────────────── */
+
+export const supabaseQuery = async (table: string) => {
+  const { data, error } = await supabase.from(table).select("*");
+  if (error) throw error;
+  return data;
+};
+
+export const supabaseMutation = async (
+  table: string,
+  id: string | null,
+  data: any
+) => {
+  if (id) {
+    const { error } = await supabase.from(table).update(data).eq("id", id);
+    if (error) throw error;
+  } else {
+    const { data: newData, error } = await supabase
+      .from(table)
+      .insert(data)
+      .select()
+      .single();
+    if (error) throw error;
+    return newData;
+  }
+};
+
+/* ─────────────────────────────────────────────
+   REACT QUERY STUBS
+────────────────────────────────────────────── */
+
+export function useQuery<T = any>(table: string) {
+  return {
+    data: [] as T[],
+    isPending: false,
+  };
+}
+
+export function useMutation(table: string) {
+  return {
+    create: async (data: any) => supabaseMutation(table, null, data),
+    update: async (id: string, data: any) => supabaseMutation(table, id, data),
+    remove: async (id: string) => supabaseMutation(table, id, { deleted: true }),
+    isPending: false,
+  };
+}
+
+/* ─────────────────────────────────────────────
+   ⭐ USER PROFILE FETCHER (for AuthContext)
+────────────────────────────────────────────── */
+
 export async function getUserProfile(userId: string) {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single()
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, role, name, profilePictureUrl")
+      .eq("id", userId)
+      .single();
 
-  if (error) throw error
-  return data
+    if (error) throw error;
+
+    return data;
+  } catch (err) {
+    console.error("[Supabase] getUserProfile error:", err);
+    return null;
+  }
 }

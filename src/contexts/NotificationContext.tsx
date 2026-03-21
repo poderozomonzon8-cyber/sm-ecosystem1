@@ -1,31 +1,18 @@
-import React, {
+import {
   createContext,
   useContext,
   useReducer,
-  useCallback,
+  useState,
   useEffect,
-  useRef,
+  ReactNode,
 } from "react";
 import { supabase } from "@/lib/supabase";
-import { useAppAuth } from "@/contexts/AuthContext";
 
-/* ══════════════════════════════════════════
-   Types
-══════════════════════════════════════════ */
-export type NotifType =
-  | "lead-new"
-  | "client-new"
-  | "invoice-sent"
-  | "invoice-opened"
-  | "estimate-approved"
-  | "payment-received"
-  | "project-updated"
-  | "hours-submitted"
-  | "expense-added"
-  | "system"
-  | "message";
+/* ─────────────────────────────────────────────
+   TYPES
+────────────────────────────────────────────── */
 
-export type NotifChannel = "in-app" | "email" | "push";
+export type NotifType = "system" | "project" | "billing" | "message";
 
 export interface InAppNotification {
   id: string;
@@ -34,110 +21,90 @@ export interface InAppNotification {
   message: string;
   read: boolean;
   timestamp: Date;
-  linkedEntityId?: string;
-  linkedEntityType?: string;
-  url?: string;
+  linkedEntityId?: string | null;
+  linkedEntityType?: string | null;
 }
 
-export type NotifPrefs = Record<NotifType, { inApp: boolean; email: boolean; push: boolean }>;
-
-const DEFAULT_PREFS: NotifPrefs = {
-  "lead-new":           { inApp: true,  email: true,  push: true  },
-  "client-new":         { inApp: true,  email: true,  push: false },
-  "invoice-sent":       { inApp: true,  email: true,  push: false },
-  "invoice-opened":     { inApp: true,  email: false, push: false },
-  "estimate-approved":  { inApp: true,  email: true,  push: true  },
-  "payment-received":   { inApp: true,  email: true,  push: true  },
-  "project-updated":    { inApp: true,  email: false, push: false },
-  "hours-submitted":    { inApp: true,  email: false, push: false },
-  "expense-added":      { inApp: false, email: false, push: false },
-  "system":             { inApp: true,  email: false, push: false },
-  "message":            { inApp: true,  email: true,  push: true  },
-};
-
-/* ══════════════════════════════════════════
-   Reducer
-══════════════════════════════════════════ */
-type State = {
+interface NotificationState {
   notifications: InAppNotification[];
-  prefs: NotifPrefs;
-  pushEnabled: boolean;
-};
+}
 
-type Action =
-  | { type: "ADD";    payload: InAppNotification }
-  | { type: "READ";   id: string }
-  | { type: "READ_ALL" }
-  | { type: "REMOVE"; id: string }
-  | { type: "CLEAR_ALL" }
-  | { type: "SET_PREF"; notifType: NotifType; channel: NotifChannel; value: boolean }
-  | { type: "SET_PUSH_ENABLED"; value: boolean }
-  | { type: "SEED";   payload: InAppNotification[] };
+type NotificationAction =
+  | { type: "SEED"; payload: InAppNotification[] }
+  | { type: "ADD"; payload: InAppNotification }
+  | { type: "MARK_READ"; payload: string }
+  | { type: "CLEAR" };
 
-function reducer(state: State, action: Action): State {
+interface NotificationContextValue {
+  notifications: InAppNotification[];
+  loading: boolean;
+  markAsRead: (id: string) => void;
+  addNotification: (n: InAppNotification) => void;
+}
+
+/* ─────────────────────────────────────────────
+   REDUCER
+────────────────────────────────────────────── */
+
+function notificationReducer(
+  state: NotificationState,
+  action: NotificationAction
+): NotificationState {
   switch (action.type) {
     case "SEED":
-      return { ...state, notifications: action.payload };
+      return { notifications: action.payload };
+
     case "ADD":
-      return { ...state, notifications: [action.payload, ...state.notifications].slice(0, 100) };
-    case "READ":
-      return { ...state, notifications: state.notifications.map((n) => n.id === action.id ? { ...n, read: true } : n) };
-    case "READ_ALL":
-      return { ...state, notifications: state.notifications.map((n) => ({ ...n, read: true })) };
-    case "REMOVE":
-      return { ...state, notifications: state.notifications.filter((n) => n.id !== action.id) };
-    case "CLEAR_ALL":
-      return { ...state, notifications: [] };
-    case "SET_PREF":
+      return { notifications: [action.payload, ...state.notifications] };
+
+    case "MARK_READ":
       return {
-        ...state,
-        prefs: {
-          ...state.prefs,
-          [action.notifType]: {
-            ...state.prefs[action.notifType],
-            [action.channel === "in-app" ? "inApp" : action.channel === "email" ? "email" : "push"]: action.value,
-          },
-        },
+        notifications: state.notifications.map((n) =>
+          n.id === action.payload ? { ...n, read: true } : n
+        ),
       };
-    case "SET_PUSH_ENABLED":
-      return { ...state, pushEnabled: action.value };
+
+    case "CLEAR":
+      return { notifications: [] };
+
     default:
       return state;
   }
 }
 
-/* ══════════════════════════════════════════
-   Context
-══════════════════════════════════════════ */
-export interface NotificationContextType {
-  notifications: InAppNotification[];
-  unreadCount: number;
-  prefs: NotifPrefs;
-  pushEnabled: boolean;
-  push: (notif: Omit<InAppNotification, "id" | "timestamp" | "read">) => void;
-  markRead: (id: string) => void;
-  markAllRead: () => void;
-  remove: (id: string) => void;
-  clearAll: () => void;
-  setPref: (notifType: NotifType, channel: NotifChannel, value: boolean) => void;
-  requestPushPermission: () => Promise<boolean>;
+/* ─────────────────────────────────────────────
+   CONTEXT
+────────────────────────────────────────────── */
+
+const NotificationContext = createContext<NotificationContextValue | null>(null);
+
+export function useNotifications() {
+  const ctx = useContext(NotificationContext);
+  if (!ctx) throw new Error("useNotifications must be used inside NotificationProvider");
+  return ctx;
 }
 
-const NotifCtx = createContext<NotificationContextType | null>(null);
+/* ─────────────────────────────────────────────
+   PROVIDER
+────────────────────────────────────────────── */
 
-/* ══════════════════════════════════════════
-   Provider
-══════════════════════════════════════════ */
-export function NotificationProvider({ children }: { children: React.ReactNode }) {
-  const { user, isAdmin, isStaff } = useAppAuth();
-  const [state, dispatch] = useReducer(reducer, {
+export function NotificationProvider({
+  user,
+  children,
+}: {
+  user: { id: string } | null;
+  children: ReactNode;
+}) {
+  const [state, dispatch] = useReducer(notificationReducer, {
     notifications: [],
-    prefs: DEFAULT_PREFS,
-    pushEnabled: false,
   });
 
-  /* Load notifications from Supabase */
   const [loading, setLoading] = useState(true);
+
+  /* ─────────────────────────────────────────────
+     LOAD NOTIFICATIONS FROM SUPABASE
+  ────────────────────────────────────────────── */
+
   useEffect(() => {
     const loadNotifications = async () => {
       if (!user?.id) {
@@ -177,106 +144,38 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     loadNotifications();
   }, [user?.id]);
 
-  /* Persist prefs */
-  useEffect(() => {
-    try {
-      localStorage.setItem("monzon_notif_prefs", JSON.stringify(state.prefs));
-    } catch { }
-  }, [state.prefs]);
+  /* ─────────────────────────────────────────────
+     ACTIONS
+  ────────────────────────────────────────────── */
 
-  /* Push permission status */
-  useEffect(() => {
-    if ("Notification" in window) {
-      dispatch({ type: "SET_PUSH_ENABLED", value: Notification.permission === "granted" });
-    }
-  }, []);
+  const markAsRead = (id: string) => {
+    dispatch({ type: "MARK_READ", payload: id });
 
-  const push = useCallback(async (
-    notif: Omit<InAppNotification, "id" | "timestamp" | "read">
-  ) => {
-    const pref = state.prefs[notif.type];
-    if (!pref?.inApp) return;
+    supabase
+      .from("Notification")
+      .update({ read: "yes" })
+      .eq("id", id)
+      .then(() => {});
+  };
 
-    const full: InAppNotification = {
-      ...notif,
-      id: `notif-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      timestamp: new Date(),
-      read: false,
-    };
-    dispatch({ type: "ADD", payload: full });
+  const addNotification = (n: InAppNotification) => {
+    dispatch({ type: "ADD", payload: n });
+  };
 
-    // Persist to DB
-    if (user) {
-      try {
-        const payload = {
-          recipientId: user.id,
-          recipientType: isAdmin ? "admin" : isStaff ? "manager" : "client",
-          title: notif.title,
-          message: notif.message,
-          type: notif.type,
-          read: "no",
-          linkedEntityId: notif.linkedEntityId ?? "",
-          linkedEntityType: notif.linkedEntityType ?? "",
-        };
-        await supabase.from("Notification").insert([payload]);
-      } catch (error) {
-        console.warn("DB notif save error:", error);
-      }
-    }
-
-    // Browser Notification API
-    if (pref?.push && state.pushEnabled && "Notification" in window && Notification.permission === "granted") {
-      new Notification(notif.title, {
-        body: notif.message,
-        icon: "/icon-192.png",
-        tag: notif.type,
-      });
-    }
-  }, [state.prefs, state.pushEnabled, user, isAdmin, isStaff]);
-
-  const markRead     = useCallback((id: string) => dispatch({ type: "READ",   id }), []);
-  const markAllRead  = useCallback(() => dispatch({ type: "READ_ALL" }), []);
-  const remove       = useCallback((id: string) => dispatch({ type: "REMOVE", id }), []);
-  const clearAll     = useCallback(() => dispatch({ type: "CLEAR_ALL" }), []);
-
-  const setPref = useCallback(
-    (notifType: NotifType, channel: NotifChannel, value: boolean) =>
-      dispatch({ type: "SET_PREF", notifType, channel, value }),
-    []
-  );
-
-  const requestPushPermission = useCallback(async (): Promise<boolean> => {
-    if (!("Notification" in window)) return false;
-    const result = await Notification.requestPermission();
-    const granted = result === "granted";
-    dispatch({ type: "SET_PUSH_ENABLED", value: granted });
-    return granted;
-  }, []);
-
-  const unreadCount = state.notifications.filter((n) => !n.read).length;
+  /* ─────────────────────────────────────────────
+     PROVIDER VALUE
+  ────────────────────────────────────────────── */
 
   return (
-    <NotifCtx.Provider value={{
-      notifications: state.notifications,
-      unreadCount,
-      prefs: state.prefs,
-      pushEnabled: state.pushEnabled,
-      push,
-      markRead,
-      markAllRead,
-      remove,
-      clearAll,
-      setPref,
-      requestPushPermission,
-    }}>
+    <NotificationContext.Provider
+      value={{
+        notifications: state.notifications,
+        loading,
+        markAsRead,
+        addNotification,
+      }}
+    >
       {children}
-    </NotifCtx.Provider>
+    </NotificationContext.Provider>
   );
 }
-
-export function useNotifications(): NotificationContextType {
-  const ctx = useContext(NotifCtx);
-  if (!ctx) throw new Error("useNotifications must be inside NotificationProvider");
-  return ctx;
-}
-
