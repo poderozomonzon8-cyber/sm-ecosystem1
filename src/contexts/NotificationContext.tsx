@@ -6,7 +6,7 @@ import React, {
   useEffect,
   useRef,
 } from "react";
-import { useQuery, useMutation } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { useAppAuth } from "@/contexts/AuthContext";
 
 /* ══════════════════════════════════════════
@@ -130,47 +130,58 @@ const NotifCtx = createContext<NotificationContextType | null>(null);
 ══════════════════════════════════════════ */
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const { user, isAdmin, isStaff } = useAppAuth();
-  const { create: createDBNotif } = useMutation("Notification");
-  const { data: dbNotifs } = useQuery("Notification", {
-    where: user ? { recipientId: { eq: user.id } } : undefined,
-    orderBy: { createdAt: "desc" },
-    limit: 50,
-  });
-
-  const storedPrefs = (() => {
-    try {
-      const raw = localStorage.getItem("monzon_notif_prefs");
-      return raw ? { ...DEFAULT_PREFS, ...JSON.parse(raw) } : DEFAULT_PREFS;
-    } catch { return DEFAULT_PREFS; }
-  })();
-
   const [state, dispatch] = useReducer(reducer, {
     notifications: [],
-    prefs: storedPrefs,
+    prefs: DEFAULT_PREFS,
     pushEnabled: false,
   });
 
-  /* Seed from DB on mount */
-  const seeded = useRef(false);
+  /* Load notifications from Supabase */
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
-    if (!dbNotifs || seeded.current) return;
-    seeded.current = true;
-    const mapped: InAppNotification[] = dbNotifs.map((n) => ({
-      id: n.id,
-      type: (n.type as NotifType) || "system",
-      title: n.title,
-      message: n.message,
-      read: n.read === "yes",
-      timestamp: new Date(n.createdAt),
-      linkedEntityId: n.linkedEntityId,
-      linkedEntityType: n.linkedEntityType,
-    }));
-    dispatch({ type: "SEED", payload: mapped });
-  }, [dbNotifs]);
+    const loadNotifications = async () => {
+      if (!user?.id) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("Notification")
+          .select("*")
+          .eq("recipientId", user.id)
+          .order("createdAt", { ascending: false })
+          .limit(50);
+
+        if (error) throw error;
+
+        const mapped: InAppNotification[] = (data || []).map((n: any) => ({
+          id: n.id,
+          type: (n.type as NotifType) || "system",
+          title: n.title,
+          message: n.message,
+          read: n.read === "yes",
+          timestamp: new Date(n.createdAt),
+          linkedEntityId: n.linkedEntityId,
+          linkedEntityType: n.linkedEntityType,
+        }));
+
+        dispatch({ type: "SEED", payload: mapped });
+      } catch (error) {
+        console.error("Notification load error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadNotifications();
+  }, [user?.id]);
 
   /* Persist prefs */
   useEffect(() => {
-    localStorage.setItem("monzon_notif_prefs", JSON.stringify(state.prefs));
+    try {
+      localStorage.setItem("monzon_notif_prefs", JSON.stringify(state.prefs));
+    } catch { }
   }, [state.prefs]);
 
   /* Push permission status */
@@ -180,22 +191,24 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
   }, []);
 
-  const push = useCallback(
-    (notif: Omit<InAppNotification, "id" | "timestamp" | "read">) => {
-      const pref = state.prefs[notif.type];
-      if (!pref?.inApp) return;
+  const push = useCallback(async (
+    notif: Omit<InAppNotification, "id" | "timestamp" | "read">
+  ) => {
+    const pref = state.prefs[notif.type];
+    if (!pref?.inApp) return;
 
-      const full: InAppNotification = {
-        ...notif,
-        id: `notif-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-        timestamp: new Date(),
-        read: false,
-      };
-      dispatch({ type: "ADD", payload: full });
+    const full: InAppNotification = {
+      ...notif,
+      id: `notif-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      timestamp: new Date(),
+      read: false,
+    };
+    dispatch({ type: "ADD", payload: full });
 
-      // Persist to DB
-      if (user) {
-        createDBNotif({
+    // Persist to DB
+    if (user) {
+      try {
+        const payload = {
           recipientId: user.id,
           recipientType: isAdmin ? "admin" : isStaff ? "manager" : "client",
           title: notif.title,
@@ -204,20 +217,22 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           read: "no",
           linkedEntityId: notif.linkedEntityId ?? "",
           linkedEntityType: notif.linkedEntityType ?? "",
-        }).catch(console.warn);
+        };
+        await supabase.from("Notification").insert([payload]);
+      } catch (error) {
+        console.warn("DB notif save error:", error);
       }
+    }
 
-      // Browser Notification API (if push enabled)
-      if (pref?.push && state.pushEnabled && "Notification" in window && Notification.permission === "granted") {
-        new Notification(notif.title, {
-          body: notif.message,
-          icon: "/icon-192.png",
-          tag: notif.type,
-        });
-      }
-    },
-    [state.prefs, state.pushEnabled, user, isAdmin, isStaff, createDBNotif]
-  );
+    // Browser Notification API
+    if (pref?.push && state.pushEnabled && "Notification" in window && Notification.permission === "granted") {
+      new Notification(notif.title, {
+        body: notif.message,
+        icon: "/icon-192.png",
+        tag: notif.type,
+      });
+    }
+  }, [state.prefs, state.pushEnabled, user, isAdmin, isStaff]);
 
   const markRead     = useCallback((id: string) => dispatch({ type: "READ",   id }), []);
   const markAllRead  = useCallback(() => dispatch({ type: "READ_ALL" }), []);
@@ -264,3 +279,4 @@ export function useNotifications(): NotificationContextType {
   if (!ctx) throw new Error("useNotifications must be inside NotificationProvider");
   return ctx;
 }
+

@@ -12,7 +12,7 @@ const ROLE_BADGE: Record<string, { label: string; cls: string }> = {
   guest:      { label: "Guest",      cls: "bg-gray-100 text-gray-500" },
 };
 
-export default function UserMenu() {
+export default function () {
   const { user, role, isAdmin, isStaff, logout } = useAppAuth();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
