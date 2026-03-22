@@ -1,5 +1,5 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
 import { AnimaProvider } from "@animaapp/playground-react-sdk";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { SplashProvider } from "@/contexts/SplashContext";
@@ -10,20 +10,15 @@ import { ThemeAnimationBridge } from "@/components/ThemeAnimationBridge";
 import { SoundProvider } from "@/contexts/SoundContext";
 import NightModeOverlay from "@/components/NightModeOverlay";
 import AmbientSoundWidget from "@/components/AmbientSoundWidget";
+
 import App from "./App";
 import "./index.css";
 
-/* Register Service Worker for PWA */
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("/sw.js", { scope: "/" })
-      .catch((err) => console.warn("[PWA] SW registration error:", err));
-  });
-}
+const rootElement = document.getElementById("root")!;
+const root = createRoot(rootElement);
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
+root.render(
+  <StrictMode>
     <AnimaProvider>
       <ThemeProvider>
         <AnimationProvider>
@@ -42,5 +37,14 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         </AnimationProvider>
       </ThemeProvider>
     </AnimaProvider>
-  </React.StrictMode>
+  </StrictMode>
 );
+
+/* Register Service Worker for PWA */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/sw.js", { scope: "/" })
+      .catch((err) => console.warn("[PWA] SW registration error:", err));
+  });
+}

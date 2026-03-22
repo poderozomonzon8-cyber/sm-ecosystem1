@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo } from "react";
+import { createContext, useContext, useMemo } from "react";
 import { useAuth as useSDKAuth } from "@animaapp/playground-react-sdk";
 
 /* ─────────────────────────────────────────────

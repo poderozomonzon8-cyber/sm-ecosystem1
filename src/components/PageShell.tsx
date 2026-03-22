@@ -10,6 +10,8 @@ export default function PageShell({ children }: { children: React.ReactNode }) {
     <div
       className="flex flex-col min-h-screen transition-colors duration-700"
       style={{
+        paddingTop: "env(safe-area-inset-top)",
+        paddingBottom: "env(safe-area-inset-bottom)",
         background: isNightMode
           ? `color-mix(in srgb, ${liveTheme["--theme-background"]} 60%, hsl(0,0%,4%))`
           : liveTheme["--theme-background"],

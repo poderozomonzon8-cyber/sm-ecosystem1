@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+* {
+  overscroll-behavior: none;
+}
+
+
 /* ═══════════════════════════════════════════════════════════
    AMÉNAGEMENT MONZON — PREMIUM CINEMATIC DESIGN SYSTEM
    Black → Charcoal → Pearl White

@@ -234,6 +234,24 @@ export default function HeaderNav() {
   const nightFilter = isNightMode ? "brightness(0.88)" : undefined;
 
   useEffect(() => {
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+      document.documentElement.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+      document.documentElement.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+      document.documentElement.style.overflow = '';
+    };
+  }, [mobileOpen]);
+
+  useEffect(() => {
     const onScroll = () => {
       const y = window.scrollY;
       setHidden(y > 250 && y > lastScrollY.current);
@@ -243,13 +261,24 @@ export default function HeaderNav() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (mobileRef.current && !mobileRef.current.contains(e.target as Node)) setMobileOpen(false);
+    const handler = (e: MouseEvent | TouchEvent) => {
+      if (mobileRef.current && !mobileRef.current.contains(e.target as Node)) {
+        setMobileOpen(false);
+      }
     };
-    if (mobileOpen) document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    const touchHandler = (e: TouchEvent) => handler(e);
+    if (mobileOpen) {
+      document.addEventListener("mousedown", handler);
+      document.addEventListener("touchstart", touchHandler, { passive: false });
+    }
+    return () => {
+      document.removeEventListener("mousedown", handler);
+      document.removeEventListener("touchstart", touchHandler);
+    };
   }, [mobileOpen]);
+
 
   // Close mobile on route change
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
@@ -426,13 +455,22 @@ export default function HeaderNav() {
 
       {/* Mobile drawer */}
       <div
-        ref={mobileRef}
-        className={["md:hidden overflow-hidden transition-all duration-500 ease-in-out", mobileOpen ? "max-h-[700px] opacity-100" : "max-h-0 opacity-0"].join(" ")}
+        className={`md:hidden fixed inset-0 z-[999] bg-slate-900/95 backdrop-blur-xl transition-transform duration-300 ease-out overscroll-none ${
+          mobileOpen ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
+        }`}
+        style={{
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)'
+        }}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) setMobileOpen(false);
+        }}
         role="navigation"
         aria-label="Mobile navigation"
       >
-        <div className="glass-dark border-t border-white/5 px-6 py-6 flex flex-col gap-1">
+        <div className="glass-dark border-t border-white/5 px-6 py-6 flex flex-col gap-1 flex-1 overflow-auto no-scrollbar">
           {/* Theme indicator badge */}
+
           {activeNavConfig && (
             <div className="mb-3 px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-gold" />
