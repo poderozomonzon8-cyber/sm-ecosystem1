@@ -12,4 +12,4 @@
 ## Current Status
 File created with all new features implemented. Currently has TS errors to fix in next iteration.
 
-**Next: User to run Supabase migrations, test print, Stripe setup, deploy.**
+- [x] Fixed buttons ✓&#10;**Next: User to run Supabase migrations, test print, Stripe setup, deploy.**
